@@ -23,4 +23,6 @@ extern uint32_t led_interval;
 void keyboard_init(void);
 bool keyboard_update(void);
 
+void debug_print(const char* msg);
+
 #endif // KEYBOARD_H

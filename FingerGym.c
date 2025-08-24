@@ -1,6 +1,7 @@
 #include "tusb.h"
 #include "keyboard.h"
 
+
 void set_led_state(void) {
     // Measure time
     static uint32_t start_ms = 0;
@@ -28,7 +29,7 @@ void keyboard_task(void) {
 
     start_ms += POLLING_INTERVAL_MS;
     
-    if (tud_suspended() && keyboard_update()) {
+    if (keyboard_update() && tud_suspended()) {
         // Get up
         tud_remote_wakeup();
     }

@@ -9,6 +9,13 @@ static uint8_t encoder_last_state = 0;
 
 uint32_t led_interval = BLINK_NOT_MOUNTED;
 
+void debug_print(const char* msg) {
+    if (tud_cdc_connected()) {
+        tud_cdc_write_str(msg);
+        tud_cdc_write_flush();
+    }
+}
+
 void keyboard_init(void) {
 
     // Initialize matrix column pins - input pins
@@ -113,6 +120,7 @@ bool keyboard_update(void) {
             }
 
             if (!is_consumer_key && keyboard_report_index < MAX_REPORT_KEYS) {
+                debug_print("Key pressed\n");
                 keyboard_report[keyboard_report_index] = key;
                 keyboard_report_index++;
             }
@@ -137,7 +145,6 @@ bool keyboard_update(void) {
         tud_hid_report(REPORT_ID_CONSUMER_CONTROL, consumer_report, sizeof(consumer_report));
     } else {
         tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &empty, 1);
-        tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &(uint8_t){0}, sizeof(uint8_t));
     }
 
     // Return true if any key was pressed
