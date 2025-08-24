@@ -34,7 +34,7 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
             uint8_t const kbd_leds = buffer[0];
 
             if (kbd_leds & KEYBOARD_LED_CAPSLOCK) {
-                led_interval = 0;
+                led_interval = BLINK_CAPS_LOCK;
             } else{
                 led_interval = BLINK_MOUNTED;
             }
@@ -45,28 +45,44 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 
     if (index == 0) {
-        memcpy(&_desc_str[1], string_desc_arr[0], 2);
-        _desc_str[0] = (TUSB_DESC_STRING << 8) | 4;
-
-    } else {
-
-        if (!(index < sizeof(string_desc_arr) / sizeof(string_desc_arr[0]))) {
-            return NULL;
-        }
-
-        const char* str = string_desc_arr[index];
-
-        uint8_t chr_count = strlen(str);
-        if (chr_count > _DESC_STR_SIZE - 1) {
-            chr_count = _DESC_STR_SIZE - 1;
-        }
-
-        for (uint8_t i = 0; i < chr_count; i++) {
-            _desc_str[1 + i] = str[i];
-        }
-
-        _desc_str[0] = (TUSB_DESC_STRING << 8) | (2 * chr_count + 2);
+        _desc_str[0] = (TUSB_DESC_STRING << 8 ) | 0x02;
+        _desc_str[1] = 0x0409; // English
+        return _desc_str;
     }
 
+    if (index >= sizeof(string_desc_arr) / sizeof(string_desc_arr[0])) {
+        return NULL;
+    }
+
+    const char* str = string_desc_arr[index];
+    size_t chr_count = strlen(str);
+    if (chr_count > (_DESC_STR_SIZE - 1)) {
+        chr_count = _DESC_STR_SIZE - 1;
+    }
+
+    for (size_t i = 0; i < chr_count; i++) {
+        _desc_str[1 + i] = str[i];
+    }
+
+    _desc_str[0] = (TUSB_DESC_STRING << 8) | (2 * chr_count + 2);
+
     return _desc_str;
+}
+
+
+// Lights show
+void tud_mount_cb(void) {
+    led_interval = BLINK_MOUNTED;
+}
+
+void tud_umount_cb(void) {
+    led_interval = BLINK_NOT_MOUNTED;
+}
+
+void tud_suspend_cb(bool remote_wakeup_en) {
+    led_interval = BLINK_SUSPENDED;
+}
+
+void tud_resume_cb(void) {
+    led_interval = BLINK_MOUNTED;
 }

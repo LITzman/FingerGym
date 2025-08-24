@@ -1,5 +1,14 @@
 #include "keyboard.h"
 
+// Global stuff
+static uint8_t keyboard_report[MAX_REPORT_KEYS];
+static uint8_t consumer_report[MAX_REPORT_CONSUMER]; // Ah
+
+static bool clear_keyboard = false;
+static uint8_t encoder_last_state = 0;
+
+uint32_t led_interval = BLINK_NOT_MOUNTED;
+
 void keyboard_init(void) {
 
     // Initialize matrix column pins - input pins
@@ -50,8 +59,10 @@ bool keyboard_update(void) {
             ((encoder_last_state == 0b11) && (encoder_current_state == 0b10)) ||
             ((encoder_last_state == 0b10) && (encoder_current_state == 0b00))) {
 
-            keyboard_report[keyboard_report_index] = HID_KEY_VOLUME_UP;
-            keyboard_report_index++;
+            if (keyboard_report_index < MAX_REPORT_KEYS) {
+                keyboard_report[keyboard_report_index] = HID_KEY_VOLUME_UP;
+                keyboard_report_index++;
+            }
         }
 
         // 00 -> 10 -> 11 -> 01 -> 00 - Decrease
@@ -60,8 +71,10 @@ bool keyboard_update(void) {
             ((encoder_last_state == 0b11) && (encoder_current_state == 0b01)) ||
             ((encoder_last_state == 0b01) && (encoder_current_state == 0b00))) {
 
-            keyboard_report[keyboard_report_index] = HID_KEY_VOLUME_DOWN;
-            keyboard_report_index++;
+            if (keyboard_report_index < MAX_REPORT_KEYS) {
+                keyboard_report[keyboard_report_index] = HID_KEY_VOLUME_DOWN;
+                keyboard_report_index++;
+            }
         }
     }
 
@@ -76,19 +89,31 @@ bool keyboard_update(void) {
         for (int j = 0; j < MATRIX_COL_COUNT; j++) {
 
             // Test col
-            if (gpio_get(matrix_col_pins[j]) && keyboard_report_index < MAX_REPORT_KEYS) {
+            if (!gpio_get(matrix_col_pins[j])) {
+                continue;
+            }
 
-                uint8_t key = keyboard_layout[i][j].key;
+            uint8_t key = keyboard_layout[i][j].key;
 
-                // Check if it's a consumer key or keyboard key
-                for (int k; k = 0; k++) {
-                    if (key = used_consumer_keys[k]) {
+            if (key == HID_KEY_NONE) {
+                continue;
+            }
+
+            // Check if it's a consumer key or keyboard key
+            bool is_consumer_key = false;
+            for (int k = 0; k < sizeof(used_consumer_keys) / sizeof(uint8_t); k++) {
+                if (key == used_consumer_keys[k]) {
+                    if (consumer_report_index < MAX_REPORT_CONSUMER) {
                         consumer_report[consumer_report_index] = key;
                         consumer_report_index++;
-                        break;
                     }
+                    is_consumer_key = true;
+                    break;
                 }
-                keyboard_report[keyboard_report_index] = keyboard_layout[i][j].key;
+            }
+
+            if (!is_consumer_key && keyboard_report_index < MAX_REPORT_KEYS) {
+                keyboard_report[keyboard_report_index] = key;
                 keyboard_report_index++;
             }
         }
@@ -97,19 +122,24 @@ bool keyboard_update(void) {
         gpio_put(matrix_row_pins[i], false);
     }
 
+    uint8_t empty = 0;
+
     // Send reports
     if (keyboard_report_index > 0) {
         tud_hid_report(REPORT_ID_KEYBOARD, keyboard_report, sizeof(keyboard_report));
         clear_keyboard = true;
     } else if (clear_keyboard) {
-        tud_hid_report(REPORT_ID_KEYBOARD, &(uint8_t){0}, sizeof(uint8_t));
+        tud_hid_report(REPORT_ID_KEYBOARD, &empty, 1);
         clear_keyboard = false;
     }
 
     if (consumer_report_index > 0) {
-        tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &consumer_report[0], sizeof(consumer_report[0]));
+        tud_hid_report(REPORT_ID_CONSUMER_CONTROL, consumer_report, sizeof(consumer_report));
+    } else {
+        tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &empty, 1);
         tud_hid_report(REPORT_ID_CONSUMER_CONTROL, &(uint8_t){0}, sizeof(uint8_t));
     }
 
+    // Return true if any key was pressed
     return (keyboard_report_index > 0 || consumer_report_index > 0);
 }
