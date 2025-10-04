@@ -28,7 +28,7 @@ void keyboard_task(void) {
     }
 
     start_ms += POLLING_INTERVAL_MS;
-    
+
     if (keyboard_update() && tud_suspended()) {
         // Get up
         tud_remote_wakeup();

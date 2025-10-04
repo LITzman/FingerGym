@@ -28,6 +28,7 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_KEY_F2, 0, 3},
         {HID_KEY_F3, 0, 4},
         {HID_KEY_F4, 0, 5},
+        {HID_KEY_NONE, 0, 6},
         {HID_KEY_F5, 0, 7},
         {HID_KEY_F6, 0, 8},
         {HID_KEY_F7, 0, 9},
@@ -56,10 +57,10 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_KEY_MINUS, 1, 11},
         {HID_KEY_EQUAL, 1, 12},
         {HID_KEY_NONE, 1, 13},
-        {HID_KEY_NONE, 1, 14},
-        {HID_KEY_NONE, 1, 15},
-        {HID_KEY_NONE, 1, 16},
-        {HID_KEY_NONE, 1, 17},
+        {HID_KEY_BACKSPACE, 1, 14},
+        {HID_KEY_INSERT, 1, 15},
+        {HID_KEY_HOME, 1, 16},
+        {HID_KEY_PAGE_UP, 1, 17},
     },
 
     {
@@ -76,12 +77,11 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_KEY_O, 2, 10},
         {HID_KEY_P, 2, 11},
         {HID_KEY_BRACKET_LEFT, 2, 12},
-        
         {HID_KEY_BRACKET_RIGHT, 2, 13},
         {HID_KEY_BACKSLASH, 2, 14},
-        {HID_KEY_INSERT, 2, 15},
-        {HID_KEY_HOME, 2, 16},
-        {HID_KEY_PAGE_UP, 2, 17},
+        {HID_KEY_DELETE, 2, 15},
+        {HID_KEY_END, 2, 16},
+        {HID_KEY_PAGE_DOWN, 2, 17},
     },
 
     {
@@ -97,11 +97,12 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_KEY_K, 3, 9},
         {HID_KEY_L, 3, 10},
         {HID_KEY_SEMICOLON, 3, 11},
-        {HID_KEY_APOSTROPHE, 3, 12},
+        HID_KEY_APOSTROPHE, 3, 12},
         {HID_KEY_ENTER, 3, 13},
-        {HID_KEY_DELETE, 3, 15},
-        {HID_KEY_END, 3, 16},
-        {HID_KEY_PAGE_DOWN, 3, 17},
+        {HID_KEY_NONE, 3, 14},
+        {HID_KEY_NONE, 3, 15},
+        {HID_KEY_NONE, 3, 16},
+        {HID_KEY_NONE, 3, 17},
     },
 
     {
@@ -121,8 +122,8 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_KEY_SHIFT_RIGHT, 4, 13},
         {HID_KEY_NONE, 4, 14},
         {HID_KEY_NONE, 4, 15},
-        {HID_KEY_NONE, 4, 16},
-        {HID_KEY_ARROW_UP, 4, 17},
+        {HID_KEY_ARROW_UP, 4, 16},
+        {HID_KEY_NONE, 4, 17},
     },
 
     {

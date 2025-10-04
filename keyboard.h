@@ -11,6 +11,8 @@
 #define MAX_REPORT_KEYS 6 // Defined by tud_hid_keyboard_report,
 #define MAX_REPORT_CONSUMER 1 // I don't need any more
 
+#define KEYBOARD_REPORT_SIZE 8 // Fucking windows
+
 enum {
     BLINK_CAPS_LOCK = 0,
     BLINK_NOT_MOUNTED = 250,
@@ -23,6 +25,6 @@ extern uint32_t led_interval;
 void keyboard_init(void);
 bool keyboard_update(void);
 
-void debug_print(const char* msg);
+void debug_print(const char* fmt, ...);
 
 #endif // KEYBOARD_H
