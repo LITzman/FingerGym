@@ -34,7 +34,7 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
             uint8_t const kbd_leds = buffer[0];
 
             if (kbd_leds & KEYBOARD_LED_CAPSLOCK) {
-                debug_print("CAPS!\n");
+                debug_print("Caps Lock\n");
                 led_interval = BLINK_CAPS_LOCK;
             } else{
                 led_interval = BLINK_MOUNTED;

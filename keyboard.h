@@ -9,7 +9,7 @@
 #include "keymap.h"
 
 #define MAX_REPORT_KEYS 6 // Defined by tud_hid_keyboard_report,
-#define MAX_REPORT_CONSUMER 1 // I don't need any more
+#define MAX_REPORT_CONSUMER 2 // I don't need any more
 
 #define KEYBOARD_REPORT_SIZE 8 // Fucking windows
 

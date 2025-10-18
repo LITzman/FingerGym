@@ -6,7 +6,9 @@ Everything regarding the order of keys
 */
 
 static const uint8_t used_consumer_keys[] = {
-    HID_USAGE_CONSUMER_PLAY_PAUSE
+    HID_USAGE_CONSUMER_PLAY_PAUSE,
+    HID_USAGE_CONSUMER_VOLUME_INCREMENT,
+    HID_USAGE_CONSUMER_VOLUME_DECREMENT,
 };
 
 struct key {
@@ -41,7 +43,6 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_USAGE_CONSUMER_PLAY_PAUSE, 0, 16}, // TODO - make this play/pause music
         {HID_KEY_MUTE, 0, 17},
     },
-
     {
         {HID_KEY_GRAVE, 1, 0},
         {HID_KEY_1, 1, 1},
@@ -62,7 +63,6 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_KEY_HOME, 1, 16},
         {HID_KEY_PAGE_UP, 1, 17},
     },
-
     {
         {HID_KEY_TAB, 2, 0},
         {HID_KEY_NONE, 2, 1},
@@ -83,7 +83,6 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_KEY_END, 2, 16},
         {HID_KEY_PAGE_DOWN, 2, 17},
     },
-
     {
         {HID_KEY_CAPS_LOCK, 3, 0},
         {HID_KEY_NONE, 3, 1},
@@ -97,14 +96,13 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_KEY_K, 3, 9},
         {HID_KEY_L, 3, 10},
         {HID_KEY_SEMICOLON, 3, 11},
-        HID_KEY_APOSTROPHE, 3, 12},
+        {HID_KEY_APOSTROPHE, 3, 12},
         {HID_KEY_ENTER, 3, 13},
         {HID_KEY_NONE, 3, 14},
         {HID_KEY_NONE, 3, 15},
         {HID_KEY_NONE, 3, 16},
         {HID_KEY_NONE, 3, 17},
     },
-
     {
         {HID_KEY_NONE, 4, 0},
         {HID_KEY_SHIFT_LEFT, 4, 1},
@@ -125,12 +123,11 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_KEY_ARROW_UP, 4, 16},
         {HID_KEY_NONE, 4, 17},
     },
-
     {
         {HID_KEY_CONTROL_LEFT, 5, 0},
         {HID_KEY_GUI_LEFT, 5, 1},
-        {HID_KEY_ALT_LEFT, 5, 2},
-        {HID_KEY_NONE, 5, 3},
+        {HID_KEY_NONE, 5, 2},
+        {HID_KEY_ALT_LEFT, 5, 3},
         {HID_KEY_NONE, 5, 4},
         {HID_KEY_NONE, 5, 5},
         {HID_KEY_SPACE, 5, 6},

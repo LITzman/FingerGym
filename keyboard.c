@@ -7,6 +7,13 @@ static uint8_t last_consumer_report[MAX_REPORT_CONSUMER] = {0};
 static uint8_t encoder_last_state = 0;
 uint32_t led_interval = BLINK_NOT_MOUNTED;
 
+static const int8_t encoder_states[16] = {
+    0, 1, -1, 0,
+    -1, 0, 0, 1,
+    1, 0, 0, -1,
+    0 -1, 1, 0,
+};
+
 void debug_print(const char* fmt, ...) {
     if (!tud_cdc_connected()) return;
 
@@ -62,37 +69,34 @@ bool keyboard_update(void) {
 
     uint8_t modifier = 0;
 
+    static int8_t encoder_accumulator = 0;
+
     // Poll encoder changes
     uint8_t encoder_current_state = (gpio_get(ENCODER_A_PIN) << 1) | gpio_get(ENCODER_B_PIN);
 
-    if (encoder_current_state != encoder_last_state) {
+    // Hail GPT
+    int8_t encoder_direction = encoder_states[(encoder_last_state << 2) | encoder_current_state];
+    encoder_last_state = encoder_current_state;
 
-        // 00 -> 01 -> 11 -> 10 -> 00 - Increase
-        if (((encoder_last_state == 0b00) && (encoder_current_state == 0b01)) ||
-            ((encoder_last_state == 0b01) && (encoder_current_state == 0b11)) ||
-            ((encoder_last_state == 0b11) && (encoder_current_state == 0b10)) ||
-            ((encoder_last_state == 0b10) && (encoder_current_state == 0b00))) {
+    if (encoder_direction != 0) {
+        encoder_accumulator += encoder_direction;
+    }
 
-            if (keyboard_report_index < MAX_REPORT_KEYS) {
-                keyboard_report[2 + keyboard_report_index] = HID_KEY_VOLUME_UP;
-                keyboard_report_index++;
-            }
-        }
-
-        // 00 -> 10 -> 11 -> 01 -> 00 - Decrease
-        if (((encoder_last_state == 0b00) && (encoder_current_state == 0b10)) ||
-            ((encoder_last_state == 0b10) && (encoder_current_state == 0b11)) ||
-            ((encoder_last_state == 0b11) && (encoder_current_state == 0b01)) ||
-            ((encoder_last_state == 0b01) && (encoder_current_state == 0b00))) {
-
-            if (keyboard_report_index < MAX_REPORT_KEYS) {
-                keyboard_report[2 + keyboard_report_index] = HID_KEY_VOLUME_DOWN;
-                keyboard_report_index++;
+    if (encoder_current_state == 0b00 && encoder_accumulator != 0) {
+        if (encoder_accumulator > 0) {
+            // debug_print("Encoder Increase\n");
+            if (consumer_report_index < MAX_REPORT_CONSUMER) {
+                consumer_report[consumer_report_index++] = HID_USAGE_CONSUMER_VOLUME_INCREMENT;
+            } 
+        } else {
+            // debug_print("Encoder Decrease\n");
+            if (consumer_report_index < MAX_REPORT_CONSUMER) {
+                consumer_report[consumer_report_index++] = HID_USAGE_CONSUMER_VOLUME_DECREMENT;
             }
         }
     }
 
-    encoder_last_state = encoder_current_state;
+    encoder_accumulator = 0;
 
     // Test each row
     for (int col = 0; col < MATRIX_COL_COUNT; col++) {
@@ -146,8 +150,8 @@ bool keyboard_update(void) {
             }
 
             if (!is_consumer_key && keyboard_report_index < MAX_REPORT_KEYS) {
-                debug_print("Key pressed: row=%d col=%d\n", row, col);
-                debug_print("Modifier byte: 0x%02X\n", modifier);
+                // debug_print("Key pressed: row=%d col=%d\n", row, col);
+                // debug_print("Modifier byte: 0x%02X\n", modifier);
                 keyboard_report[2 + keyboard_report_index] = key;
                 keyboard_report_index++;
             }
@@ -155,8 +159,6 @@ bool keyboard_update(void) {
 
         // Chill row
         gpio_put(matrix_col_pins[col], false);
-        // gpio_set_dir(matrix_col_pins[col], GPIO_IN);
-        // gpio_disable_pulls(matrix_col_pins[col]);
     }
 
     keyboard_report[0] = modifier;
