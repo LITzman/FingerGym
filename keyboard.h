@@ -21,6 +21,7 @@ enum {
 };
 
 extern uint32_t led_interval;
+extern bool remote_wakeup_enabled;
 
 void keyboard_init(void);
 bool keyboard_update(void);

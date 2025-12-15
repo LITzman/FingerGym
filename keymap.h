@@ -137,7 +137,7 @@ static const struct key keyboard_layout[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {
         {HID_KEY_ALT_RIGHT, 5, 10},
         {HID_KEY_GUI_RIGHT, 5, 11},
         {HID_KEY_NONE, 5, 12},
-        {HID_KEY_MENU, 5, 13},
+        {HID_KEY_MENU, 5, 13}, // TODO, doesn't work
         {HID_KEY_CONTROL_RIGHT, 5, 14},
         {HID_KEY_ARROW_LEFT, 5, 15},
         {HID_KEY_ARROW_DOWN, 5, 16},

@@ -7,6 +7,7 @@ static uint8_t last_consumer_report[MAX_REPORT_CONSUMER] = {0};
 static uint8_t zero_report[KEYBOARD_REPORT_SIZE] = {0};
 static uint8_t encoder_last_state = 0;
 uint32_t led_interval = BLINK_NOT_MOUNTED;
+bool remote_wakeup_enabled = false;
 
 static const int8_t encoder_states[16] = {
     0, 1, -1, 0,
@@ -14,6 +15,13 @@ static const int8_t encoder_states[16] = {
     1, 0, 0, -1,
     0, -1, 1, 0,
 };
+
+#ifndef DEBOUNCE_TICKS
+#define DEBOUNCE_TICKS 5
+#endif
+
+static uint8_t debounced_state[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {0};
+static uint8_t debounce_counters[MATRIX_ROW_COUNT][MATRIX_COL_COUNT] = {0};
 
 void debug_print(const char* fmt, ...) {
     if (!tud_cdc_connected()) return;
@@ -57,14 +65,12 @@ void keyboard_init(void) {
 }
 
 void keyboard_reset(void) {
-    tud_hid_keyboard_report(REPORT_ID_KEYBOARD, zero_report, sizeof(zero_report));
+    tud_hid_report(REPORT_ID_KEYBOARD, zero_report, sizeof(zero_report));
 }
 
 bool keyboard_update(void) {
 
-    if (!tud_hid_ready()){
-        return false;
-    }
+    bool hid_ready = tud_hid_ready();
 
     uint8_t keyboard_report[KEYBOARD_REPORT_SIZE] = {0};
     uint8_t consumer_report[MAX_REPORT_CONSUMER] = {0}; // Ah
@@ -73,6 +79,13 @@ bool keyboard_update(void) {
     uint8_t consumer_report_index = 0;
 
     uint8_t modifier = 0;
+
+    static uint8_t raw_state[MATRIX_ROW_COUNT][MATRIX_COL_COUNT];
+    for (int r = 0; r < MATRIX_ROW_COUNT; r++) {
+        for (int c = 0; c < MATRIX_COL_COUNT; c++) {
+            raw_state[r][c] = 0;
+        }
+    }
 
     static int8_t encoder_accumulator = 0;
 
@@ -103,31 +116,58 @@ bool keyboard_update(void) {
 
     encoder_accumulator = 0;
 
-    // Test each row
+    // Test each column
     for (int col = 0; col < MATRIX_COL_COUNT; col++) {
 
         for (int i = 0; i < MATRIX_COL_COUNT; i++) {
-            gpio_set_dir(matrix_col_pins[i], GPIO_OUT);
+            gpio_set_dir(matrix_col_pins[i], GPIO_IN);
             gpio_disable_pulls(matrix_col_pins[i]); // float
         }
 
-        // Activate row
+        // Drive active column high
+        gpio_set_dir(matrix_col_pins[col], GPIO_OUT);
         gpio_put(matrix_col_pins[col], true);
 
-        sleep_us(30);
+        sleep_us(50);
 
         for (int row = 0; row < MATRIX_ROW_COUNT; row++) {
-
-            // Test col
-            if (!gpio_get(matrix_row_pins[row])) {
-                continue;
+            if (gpio_get(matrix_row_pins[row])) {
+                raw_state[row][col] = 1;
             }
+        }
+
+        // Set column back to input / float
+        gpio_set_dir(matrix_col_pins[col], GPIO_IN);
+        gpio_disable_pulls(matrix_col_pins[col]);
+    }
+
+    // Debounce: compare raw_state with debounced_state and update counters.
+    for (int r = 0; r < MATRIX_ROW_COUNT; r++) {
+        for (int c = 0; c < MATRIX_COL_COUNT; c++) {
+            uint8_t raw = raw_state[r][c];
+            if (raw != debounced_state[r][c]) {
+                // change observed
+                if (debounce_counters[r][c] < DEBOUNCE_TICKS) {
+                    debounce_counters[r][c]++;
+                }
+                if (debounce_counters[r][c] >= DEBOUNCE_TICKS) {
+                    debounced_state[r][c] = raw;
+                    debounce_counters[r][c] = 0;
+                }
+            } else {
+                // stable, reset counter
+                debounce_counters[r][c] = 0;
+            }
+        }
+    }
+
+    // Build reports from debounced_state
+    for (int col = 0; col < MATRIX_COL_COUNT; col++) {
+        for (int row = 0; row < MATRIX_ROW_COUNT; row++) {
+            if (!debounced_state[row][col]) continue;
 
             uint8_t key = keyboard_layout[row][col].key;
-
-            if (key == HID_KEY_NONE) {
-                continue;
-            }
+            if (key == HID_KEY_NONE) continue;
 
             // Activate modifiers
             switch (key) {
@@ -155,31 +195,28 @@ bool keyboard_update(void) {
             }
 
             if (!is_consumer_key && keyboard_report_index < MAX_REPORT_KEYS) {
-                // debug_print("Key pressed: row=%d col=%d\n", row, col);
-                // debug_print("Modifier byte: 0x%02X\n", modifier);
                 keyboard_report[2 + keyboard_report_index] = key;
                 keyboard_report_index++;
             }
         }
-
-        // Chill row
-        gpio_put(matrix_col_pins[col], false);
     }
 
     keyboard_report[0] = modifier;
     keyboard_report[1] = 0;
 
     // Send reports
-    if (memcmp(last_keyboard_report, keyboard_report, KEYBOARD_REPORT_SIZE) != 0) {
-        tud_hid_report(REPORT_ID_KEYBOARD, keyboard_report, sizeof(keyboard_report));
-        memcpy(last_keyboard_report, keyboard_report, KEYBOARD_REPORT_SIZE);
+    if (hid_ready) {
+        if (memcmp(last_keyboard_report, keyboard_report, KEYBOARD_REPORT_SIZE) != 0) {
+            tud_hid_report(REPORT_ID_KEYBOARD, keyboard_report, sizeof(keyboard_report));
+            memcpy(last_keyboard_report, keyboard_report, KEYBOARD_REPORT_SIZE);
+        }
+
+        if (memcmp(last_consumer_report, consumer_report, MAX_REPORT_CONSUMER) != 0) {
+            tud_hid_report(REPORT_ID_CONSUMER_CONTROL, consumer_report, MAX_REPORT_CONSUMER);
+            memcpy(last_consumer_report, consumer_report, MAX_REPORT_CONSUMER);
+        }
     }
 
-    if (memcmp(last_consumer_report, consumer_report, MAX_REPORT_CONSUMER) != 0) {
-        tud_hid_report(REPORT_ID_CONSUMER_CONTROL, consumer_report, MAX_REPORT_CONSUMER);
-        memcpy(last_consumer_report, consumer_report, MAX_REPORT_CONSUMER);
-    }
-
-    // Return true if any key was pressed
+    // Return true if any key was pressed (so caller may trigger wakeup)
     return (keyboard_report_index > 0 || consumer_report_index > 0);
 }

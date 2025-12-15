@@ -85,6 +85,12 @@ void tud_umount_cb(void) {
 void tud_suspend_cb(bool remote_wakeup_en) {
     led_interval = BLINK_SUSPENDED;
     keyboard_reset();
+    remote_wakeup_enabled = remote_wakeup_en;
+    if (remote_wakeup_en) {
+        debug_print("Suspend: remote wakeup enabled\n");
+    } else {
+        debug_print("Suspend: remote wakeup NOT enabled\n");
+    }
 }
 
 void tud_resume_cb(void) {

@@ -7,6 +7,10 @@ void set_led_state(void) {
     static uint32_t start_ms = 0;
     static bool led_state = false;
 
+    if (led_interval == 0) {
+        return;
+    }
+
     if (start_ms == 0) {
         start_ms = board_millis();
     }
@@ -31,7 +35,12 @@ void keyboard_task(void) {
 
     if (keyboard_update() && tud_suspended()) {
         // Get up
-        tud_remote_wakeup();
+        if (remote_wakeup_enabled) {
+            debug_print("Key press while suspended: attempting remote wakeup\n");
+            tud_remote_wakeup();
+        } else {
+            debug_print("Key press while suspended but host didn't allow remote wakeup\n");
+        }
     }
 }
 
