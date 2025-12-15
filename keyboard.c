@@ -4,6 +4,7 @@
 
 static uint8_t last_keyboard_report[KEYBOARD_REPORT_SIZE] = {0};
 static uint8_t last_consumer_report[MAX_REPORT_CONSUMER] = {0};
+static uint8_t zero_report[KEYBOARD_REPORT_SIZE] = {0};
 static uint8_t encoder_last_state = 0;
 uint32_t led_interval = BLINK_NOT_MOUNTED;
 
@@ -11,7 +12,7 @@ static const int8_t encoder_states[16] = {
     0, 1, -1, 0,
     -1, 0, 0, 1,
     1, 0, 0, -1,
-    0 -1, 1, 0,
+    0, -1, 1, 0,
 };
 
 void debug_print(const char* fmt, ...) {
@@ -53,6 +54,10 @@ void keyboard_init(void) {
     gpio_pull_up(ENCODER_B_PIN);
     gpio_set_dir(ENCODER_A_PIN, GPIO_IN);
     gpio_set_dir(ENCODER_B_PIN, GPIO_IN);
+}
+
+void keyboard_reset(void) {
+    tud_hid_keyboard_report(REPORT_ID_KEYBOARD, zero_report, sizeof(zero_report));
 }
 
 bool keyboard_update(void) {

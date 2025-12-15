@@ -24,6 +24,7 @@ extern uint32_t led_interval;
 
 void keyboard_init(void);
 bool keyboard_update(void);
+void keyboard_reset(void);
 
 void debug_print(const char* fmt, ...);
 

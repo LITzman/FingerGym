@@ -74,16 +74,20 @@ uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 // Lights show
 void tud_mount_cb(void) {
     led_interval = BLINK_MOUNTED;
+    keyboard_reset();
 }
 
 void tud_umount_cb(void) {
     led_interval = BLINK_NOT_MOUNTED;
+    keyboard_reset();
 }
 
 void tud_suspend_cb(bool remote_wakeup_en) {
     led_interval = BLINK_SUSPENDED;
+    keyboard_reset();
 }
 
 void tud_resume_cb(void) {
     led_interval = BLINK_MOUNTED;
+    keyboard_reset();
 }
